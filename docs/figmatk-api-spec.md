@@ -7,22 +7,28 @@ built on top of figmatk's existing `FigDeck` codec layer.
 Analogous to python-pptx in scope and design philosophy.
 
 See `docs/feature-map.md` for the full python-pptx → figmatk feature mapping
-that drives this spec.
+that drives this spec. See `docs/format/` for the `.deck` file format specification.
 
 ---
 
 ## Design Principles
 
-1. **Validate before expanding.** The `.deck` format is partially reverse-engineered.
+1. **Slides-mode-first.** The primary consumer is an AI system building presentations.
+   Default to high-level abstractions: named text styles (Title, Header 1-3, Body 1-3,
+   Note), named colors from the palette, and template overrides. Raw Design-mode control
+   (custom fonts, exact RGB, manual positioning) is available as optional overrides
+   but not the primary interface.
+
+2. **Validate before expanding.** The `.deck` format is partially reverse-engineered.
    Don't assume a field works in Figma until a roundtrip test confirms it.
 
-2. **Fail loudly on unknowns.** Unvalidated operations throw `NotImplementedError`
+3. **Fail loudly on unknowns.** Unvalidated operations throw `NotImplementedError`
    with a clear message. No silent no-ops.
 
-3. **One validation gate per feature.** Test a feature in isolation, confirm it
+4. **One validation gate per feature.** Test a feature in isolation, confirm it
    survives a Figma close/reopen cycle, then ship it. Don't over-test.
 
-4. **Phases map to confidence, not complexity.** Phase 1 = known-good. Phase 2 =
+5. **Phases map to confidence, not complexity.** Phase 1 = known-good. Phase 2 =
    needs investigation. Phase 3 = Figma-richer-than-pptx territory.
 
 ---
@@ -243,29 +249,44 @@ independently.
 
 Work top-down: frame → paragraph → run. Stop at first failure and document.
 
+**Preferred (Slides-mode) API — use named text styles:**
+
 ```js
-// Text frame
-textBox.verticalAlign = 'middle'   // 'top' | 'middle' | 'bottom'
-textBox.wordWrap = true
-
-// Paragraph
-para.alignment = 'center'          // 'left' | 'center' | 'right' | 'justify'
-para.lineSpacing = 1.5
-para.spaceBefore = 8
-para.spaceAfter = 8
-
-// Run (character-level)
-run.font.name = 'Inter'
-run.font.size = 24
-run.font.bold = true
-run.font.italic = true
-run.font.color = { r: 255, g: 0, b: 0 }
-run.font.underline = true
+slide.addText('Hello World', { style: 'Title' })       // named style
+slide.addText('Body copy', { style: 'Body 1' })        // named style
 ```
 
-**Investigate:** Text style fields live on TEXT nodes (`style` object).
-Overriding text formatting via `symbolOverrides` may differ from direct
-node edits — test both paths.
+Available named styles: Title, Header 1, Header 2, Header 3, Body 1, Body 2, Body 3, Note.
+Each maps to a `styleIdForText` reference to the built-in Light Slides theme styles.
+
+**Raw (Design-mode) overrides — optional:**
+
+```js
+slide.addText('Custom', {
+  style: 'Body 1',                     // base style
+  font: { family: 'Georgia' },         // override font
+  fontSize: 28,                        // override size
+  color: { r: 1, g: 0, b: 0 },        // override fill
+  align: 'center',                     // override alignment
+})
+```
+
+**Format findings (validated from reference deck):**
+- TEXT node on slide: `textData.characters`, `fontName`, `fontSize`, `lineHeight`, `letterSpacing`
+- `textAutoResize: 'HEIGHT'` = fixed width, hug height (standard for slides)
+- `styleIdForText` references named style by GUID
+- `derivedTextData` is cached glyph layout — safe to omit on creation
+- Text nodes are typically inside a FRAME (auto-layout container), not direct slide children
+- FRAME with `stackMode: 'VERTICAL'` and `stackSpacing: 24` handles layout
+
+**Still unknown:**
+- Per-run formatting (bold + italic in same text box) — may require `styleOverrideTable`
+- Paragraph-level spacing and indentation
+
+**Validated:**
+- Custom fonts: set `fontName: { family, style, postscript }` + sentinel `styleIdForText`
+  (0xFFFFFFFF:0xFFFFFFFF) to detach from named style. No font embedding — Figma resolves
+  by name at runtime. Needs generation + Figma roundtrip validation.
 
 ---
 
@@ -300,16 +321,24 @@ Each shape type is its own investigation. Do not combine until each is
 individually confirmed.
 
 ```js
-slide.addTextBox(x, y, width, height, 'text')
-slide.addRectangle(x, y, width, height)
-slide.addEllipse(x, y, width, height)
-slide.addFrame(x, y, width, height)
+// Preferred — named styles and colors
+slide.addText('Hello', { style: 'Title' })                      // ✅ format learned
+slide.addText('Body', { style: 'Body 1', color: 'Blue' })       // named color
+slide.addRectangle(x, y, width, height, { fill: 'Red' })        // ✅ validated
+slide.addEllipse(x, y, width, height, { fill: 'Teal' })
+slide.addFrame(x, y, width, height)                              // ✅ format learned
 slide.addLine(x1, y1, x2, y2)
-slide.addImage(x, y, width, height, 'image.jpg')  // freestanding, not override
+slide.addImage(x, y, width, height, 'image.jpg')                // freestanding, not override
+
+// Raw overrides still available
+slide.addRectangle(x, y, w, h, { fill: { r: 0.5, g: 0, b: 0 } })
 ```
 
-**Investigate:** Minimum viable node structure for each type. What fields
-are required? What can be omitted? Start with RECTANGLE — simplest geometry.
+**Status:**
+- `addRectangle` — ✅ validated, ROUNDED_RECTANGLE node
+- `addText` — format learned (TEXT + FRAME), needs validation
+- `addFrame` — format learned, needs validation
+- Others — need reference decks
 
 ---
 
