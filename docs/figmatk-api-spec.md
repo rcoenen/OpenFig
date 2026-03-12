@@ -296,9 +296,23 @@ slide.addText([
 ], { style: 'Body 1' })
 ```
 
+**Validated (lists):**
+- Bullet lists ✅ — `list: 'bullet'` or per-run `{ bullet: true }`
+- Numbered lists ✅ — `list: 'number'` or per-run `{ number: true }`
+- Nested lists ✅ — `indent: 2` for sub-items (auto a/b/c numbering at level 2)
+
+```js
+slide.addText('One\nTwo\nThree\n', { style: 'Body 1', list: 'bullet' })
+
+slide.addText([
+  { text: 'Heading\n' },
+  { text: 'Item\n', bullet: true },
+  { text: 'Sub-item\n', bullet: true, indent: 2 },
+], { style: 'Body 1' })
+```
+
 **Still unknown:**
 - Paragraph-level spacing and indentation
-- Text lists (bulleted, numbered)
 
 ---
 
