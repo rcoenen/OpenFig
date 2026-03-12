@@ -1,4 +1,4 @@
-# FigmaTK
+# FigmaTK — The Figma ToolKit (v0.0.1)
 
 Swiss-army knife CLI for Figma `.deck` and `.fig` files. Parse, inspect, modify, and rebuild Figma Slides decks programmatically — no Figma API required.
 
@@ -7,6 +7,8 @@ Swiss-army knife CLI for Figma `.deck` and `.fig` files. Parse, inspect, modify,
 Figma Slides lets you download presentations as `.deck` files — and re-upload them. This is the **native** round-trip format. The alternative, exporting to `.pptx`, is lossy: vectors get rasterized to bitmaps, fonts fall back to system defaults, and precise layout breaks. By staying in `.deck`, you preserve everything — fonts, vector shapes, component overrides, styles — exactly as Figma renders them.
 
 **FigmaTK** makes this round-trip programmable. Download a `.deck`, modify it with these utilities, re-upload to Figma. Everything stays native.
+
+Plug in [Claude Code](https://claude.ai/code), [Codex](https://openai.com/index/openai-codex/), or any coding agent and you have an AI that can read and edit Figma presentations end-to-end — without ever opening the Figma UI.
 
 ## Use Cases
 
