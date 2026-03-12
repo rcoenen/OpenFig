@@ -1,7 +1,7 @@
 {
-  "name": "figmatk",
+  "name": "figmatoolkit",
   "version": "0.1.0",
-  "description": "Swiss-army knife CLI for Figma .deck and .fig files",
+  "description": "FigmaToolKit — Swiss-army knife CLI for Figma .deck and .fig files",
   "type": "module",
   "bin": {
     "figmatk": "./cli.mjs"

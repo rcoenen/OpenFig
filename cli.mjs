@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * figmatk — Swiss-army knife for Figma .deck / .fig files.
+ * FigmaTK — Swiss-army knife for Figma .deck / .fig files.
  *
  * Usage: node figmatk/cli.mjs <command> [args...]
  *
@@ -29,7 +29,7 @@ const COMMANDS = {
 const command = process.argv[2];
 
 if (!command || command === '--help' || command === '-h') {
-  console.log(`figmatk — Swiss-army knife for Figma .deck / .fig files\n`);
+  console.log(`FigmaTK — Swiss-army knife for Figma .deck / .fig files\n`);
   console.log('Commands:');
   console.log('  inspect        Show document structure (node hierarchy tree)');
   console.log('  list-text      List all text content in the deck');
