@@ -225,29 +225,25 @@ shape.name = 'New Name'          // rename
 
 ---
 
-### 2.3 — Shape fill 🔬
+### 2.3 — Shape fill ✅ Validated
 
 ```js
-shape.fill.solid(255, 0, 0)       // solid RGB
-shape.fill.none()                  // remove fill
-shape.fill.opacity(0.5)            // fill opacity
+shape.fill                                    // read: { r, g, b, a } or null
+shape.setFill({ r: 1, g: 0, b: 0 })         // solid RGB
+shape.setFill({ r: 0.5, g: 0, b: 0.8 }, { opacity: 0.5 })  // with opacity
+shape.removeFill()                            // transparent
 ```
-
-**Investigate:** `fillPaints` array on shape nodes. Solid fill is simplest —
-start there. Gradient after solid is confirmed.
 
 ---
 
-### 2.4 — Shape stroke 🔬
+### 2.4 — Shape stroke ✅ Validated
 
 ```js
-shape.stroke.color(0, 0, 0)
-shape.stroke.weight(2)
-shape.stroke.none()
+shape.stroke                                  // read: { r, g, b, a, weight } or null
+shape.setStroke({ r: 0, g: 0, b: 1 }, { weight: 8 })  // solid, 8px
+shape.setStroke({ r: 1, g: 0, b: 0 }, { weight: 4, align: 'OUTSIDE' })
+shape.removeStroke()
 ```
-
-**Investigate:** `strokePaints` + `strokeWeight` fields. Confirm each
-independently.
 
 ---
 
