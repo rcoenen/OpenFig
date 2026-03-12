@@ -6,10 +6,10 @@ description: >
   clone or remove slides, or produce a .deck file for Figma Slides.
   Powered by FigmaTK under the hood.
 metadata:
-  version: "0.0.14"
+  version: "0.0.15"
 ---
 
-# FigmaTK Skill
+# Figma Slides Creator
 
 ## ⚠️ Never open .deck files directly
 
