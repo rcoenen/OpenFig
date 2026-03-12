@@ -1,0 +1,5 @@
+node_modules/
+*.deck
+*.fig
+/tmp/
+.DS_Store

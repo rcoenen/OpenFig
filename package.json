@@ -1,0 +1,21 @@
+{
+  "name": "figmatk",
+  "version": "0.1.0",
+  "description": "Swiss-army knife CLI for Figma .deck and .fig files",
+  "type": "module",
+  "bin": {
+    "figmatk": "./cli.mjs"
+  },
+  "scripts": {
+    "start": "node cli.mjs"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "fzstd": "^0.1.1",
+    "kiwi-schema": "^0.5.0",
+    "pako": "^2.1.0",
+    "zstd-codec": "^0.1.5"
+  },
+  "keywords": ["figma", "deck", "fig", "slides", "kiwi", "binary"],
+  "license": "MIT"
+}
