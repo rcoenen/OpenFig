@@ -10,9 +10,9 @@ import { nid, parseId, positionChar } from '../lib/node-helpers.mjs';
 import { imageOv } from '../lib/image-helpers.mjs';
 import { deepClone } from '../lib/deep-clone.mjs';
 import { readFileSync, copyFileSync, existsSync, mkdirSync } from 'fs';
-import { execSync } from 'child_process';
 import { createHash } from 'crypto';
 import { join, resolve } from 'path';
+import { getImageDimensions, generateThumbnail } from '../lib/image-utils.mjs';
 
 function sha1Hex(buf) {
   return createHash('sha1').update(buf).digest('hex');
@@ -103,13 +103,10 @@ export async function run(args, flags) {
 
     const imgBuf = readFileSync(imgPath);
     const imgHash = sha1Hex(imgBuf);
-    const sipsOut = execSync(`sips -g pixelWidth -g pixelHeight "${imgPath}"`, { encoding: 'utf8' });
-    const w = parseInt(sipsOut.match(/pixelWidth:\s*(\d+)/)?.[1] || '0');
-    const h = parseInt(sipsOut.match(/pixelHeight:\s*(\d+)/)?.[1] || '0');
+    const { width: w, height: h } = await getImageDimensions(imgPath);
 
-    // Generate thumbnail
     const tmpThumb = `/tmp/figmatk_thumb_${Date.now()}.png`;
-    execSync(`sips -Z 320 "${imgPath}" --out "${tmpThumb}"`, { stdio: 'pipe' });
+    await generateThumbnail(imgPath, tmpThumb);
     const thumbHash = sha1Hex(readFileSync(tmpThumb));
 
     copyToImages(deck, imgHash, imgPath);

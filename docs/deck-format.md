@@ -399,11 +399,19 @@ live **directly on the node**, not in any sub-structure.
 }
 ```
 
-**Key facts:**
-- Position: `transform.m02` = x, `transform.m12` = y
-- Size: `size.x` = width, `size.y` = height
-- `fillGeometry` references a blob by index — unknown if required (Figma may recompute)
+**Key facts (validated):**
+- Position: `transform.m02` = x, `transform.m12` = y ✅
+- Size: `size.x` = width, `size.y` = height ✅
+- `fillGeometry` is NOT required — Figma recomputes it on import ✅
+- Fill opacity: set `opacity` on the `fillPaints` entry (0–1) ✅
+- Corner radius: set `cornerRadius` + all four `rectangle*CornerRadius` fields ✅
+- Z-order: nodes later in `nodeChanges` render on top ✅
+- `strokeWeight: 0` removes stroke entirely ✅
+- Setting `cornerRadius` = half of width/height produces a **circle** ✅
+- Shapes can extend beyond slide bounds — Figma clips at the slide edge ✅
 - Also used for image placeholder overrides (see Symbol Overrides section)
+
+**Slide dimensions:** 1920×1080 (stored on SLIDE node `size` field). SLIDE_GRID is 2400×1560.
 
 ### SHAPE_WITH_TEXT
 

@@ -7,9 +7,9 @@ import { FigDeck } from '../lib/fig-deck.mjs';
 import { nid, parseId } from '../lib/node-helpers.mjs';
 import { imageOv } from '../lib/image-helpers.mjs';
 import { readFileSync, copyFileSync, existsSync, mkdirSync } from 'fs';
-import { execSync } from 'child_process';
 import { createHash } from 'crypto';
 import { join, resolve } from 'path';
+import { getImageDimensions, generateThumbnail } from '../lib/image-utils.mjs';
 
 function sha1Hex(buf) {
   return createHash('sha1').update(buf).digest('hex');
@@ -37,30 +37,19 @@ export async function run(args, flags) {
   const inst = deck.getSlideInstance(nid(slide));
   if (!inst) { console.error(`No instance on slide ${nid(slide)}`); process.exit(1); }
 
-  // Hash the image
   const imgBuf = readFileSync(resolve(imagePath));
   const imgHash = sha1Hex(imgBuf);
+  const { width, height } = await getImageDimensions(resolve(imagePath));
 
-  // Get image dimensions via sips
-  const sipsOut = execSync(`sips -g pixelWidth -g pixelHeight "${resolve(imagePath)}"`, { encoding: 'utf8' });
-  const wMatch = sipsOut.match(/pixelWidth:\s*(\d+)/);
-  const hMatch = sipsOut.match(/pixelHeight:\s*(\d+)/);
-  const width = wMatch ? parseInt(wMatch[1]) : 0;
-  const height = hMatch ? parseInt(hMatch[1]) : 0;
-
-  // Handle thumbnail
   let thumbHash;
   if (thumbPath) {
     const tBuf = readFileSync(resolve(thumbPath));
     thumbHash = sha1Hex(tBuf);
-    // Copy thumbnail to images dir
     copyToImages(deck, thumbHash, resolve(thumbPath));
   } else {
-    // Generate thumbnail (~320px wide)
     const tmpThumb = `/tmp/figmatk_thumb_${Date.now()}.png`;
-    execSync(`sips -Z 320 "${resolve(imagePath)}" --out "${tmpThumb}"`, { stdio: 'pipe' });
-    const tBuf = readFileSync(tmpThumb);
-    thumbHash = sha1Hex(tBuf);
+    await generateThumbnail(resolve(imagePath), tmpThumb);
+    thumbHash = sha1Hex(readFileSync(tmpThumb));
     copyToImages(deck, thumbHash, tmpThumb);
   }
 
