@@ -48,7 +48,7 @@ live **directly on the node**, not in any sub-structure.
 
 ---
 
-## FRAME (auto-layout container) 🔬
+## FRAME (auto-layout container) ✅
 
 Used to group and auto-lay-out child nodes (e.g., title + body text).
 
@@ -70,7 +70,7 @@ Used to group and auto-lay-out child nodes (e.g., title + body text).
 }
 ```
 
-Format learned from reference deck. Needs generation + Figma validation.
+Validated: vertical auto-layout with spacing, TEXT children positioned correctly ✅
 
 ---
 

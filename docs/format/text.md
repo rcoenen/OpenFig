@@ -1,6 +1,6 @@
 # Text Nodes & Typography
 
-## TEXT Node 🔬
+## TEXT Node ✅
 
 A freestanding text node on the slide. Typically placed inside a FRAME for auto-layout.
 
@@ -101,6 +101,15 @@ the node.
 - Detaching = sentinel `styleIdForText` + all fields become explicit on node
 
 ---
+
+## Validated
+
+- Freestanding TEXT node on slide with named style ✅
+- Custom font (detached style) with fontName fields ✅
+- Fill color on text ✅
+- Horizontal alignment (LEFT, CENTER, RIGHT) ✅
+- TEXT inside FRAME auto-layout container ✅
+- `derivedTextData` can be omitted — Figma recomputes ✅
 
 ## Unknown / Not Yet Investigated
 
