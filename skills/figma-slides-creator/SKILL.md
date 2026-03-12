@@ -6,7 +6,7 @@ description: >
   clone or remove slides, or produce a .deck file for Figma Slides.
   Powered by FigmaTK under the hood.
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Figma Slides Creator
@@ -119,7 +119,7 @@ node /tmp/figmatk-ws/deck.mjs
 | `setBackground` with hex | `s.setBackground('#1A1A1A')` | `s.setBackground('Black')` |
 | `setBackground` with raw RGB | `s.setBackground({ r:0.1, g:0.1, b:0.1 })` | `s.setBackground('Black')` — raw RGB silently renders white |
 | Shape method signature | `s.addRectangle({ x:0, y:0, width:100 })` | `s.addRectangle(0, 0, 100, 100, opts)` |
-| Shape fill color | `{ fill: '#F4900C' }` | `{ fill: hex('#F4900C') }` — use the hex() helper |
+| Shape fill color | `{ fill: { r:1, g:0, b:0 } }` | `{ fill: '#F4900C' }` or `{ fill: 'Red' }` — hex strings and named colors work directly |
 | `addLine` options | `{ strokeColor: ..., strokeWeight: 2 }` | `{ color: 'Black', weight: 2 }` |
 | `align` value | `align: 'left'` | `align: 'LEFT'` (uppercase) |
 | `addImage` without await | `slide.addImage('/tmp/photo.jpg')` | `await slide.addImage('/tmp/photo.jpg')` — async, images silently missing without await |
