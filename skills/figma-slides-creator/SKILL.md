@@ -6,7 +6,7 @@ description: >
   clone or remove slides, or produce a .deck file for Figma Slides.
   Powered by FigmaTK under the hood.
 metadata:
-  version: "0.2.4"
+  version: "0.2.5"
 ---
 
 # Figma Slides Creator
@@ -280,6 +280,8 @@ Every slide needs at least **one visual element** — shape, image, SVG, or tabl
 - Left-align body text. Centre only titles on title/closing slides.
 - Minimum 64px margin from slide edges. 24–48px between content blocks.
 - Use `Header 2` or `Header 3` for slide titles on content slides (not `Title` — that's for the title slide only).
+- **Body text: max 2 sentences per text block.** Text boxes have fixed heights — overflow gets clipped. If you have more to say, use a bullet list or split across slides.
+- **Bullets: max 6 items, max 8 words per bullet.** Longer bullets wrap and push content off-slide.
 
 ### Never do
 
@@ -289,6 +291,7 @@ Every slide needs at least **one visual element** — shape, image, SVG, or tabl
 - Text-only slides
 - Low-contrast text against background
 - Skip the closing slide — it makes the deck feel unfinished
+- Put long paragraphs in body/caption fields — text overflows the container
 
 ---
 
