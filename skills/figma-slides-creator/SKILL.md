@@ -6,7 +6,7 @@ description: >
   clone or remove slides, or produce a .deck file for Figma Slides.
   Powered by FigmaTK under the hood.
 metadata:
-  version: "0.0.12"
+  version: "0.0.13"
 ---
 
 # FigmaTK Skill
@@ -102,13 +102,17 @@ function hex(h) {
 | `Body 3` | 24pt | Regular | Captions, labels |
 | `Note` | 20pt | Regular | Footnotes, sources |
 
-### Named colors for `setBackground()`
+### Colors for `setBackground()`
 
-> **Case-sensitive.** `'Black'` works, `'black'` does not.
+Accepts named colors, hex strings, or designer aliases — **when using figmatk 0.0.12+ from the workspace install**.
+
+**Named colors** (case-sensitive, from the Light Slides theme):
 
 `'Black'`, `'White'`, `'Grey'`, `'Blue'`, `'Red'`, `'Yellow'`, `'Green'`, `'Orange'`, `'Pink'`, `'Purple'`, `'Teal'`, `'Violet'`, `'Persimmon'`, `'Pale Pink'`, `'Pale Blue'`, `'Pale Green'`, `'Pale Teal'`, `'Pale Purple'`, `'Pale Persimmon'`, `'Pale Violet'`, `'Pale Red'`, `'Pale Yellow'`
 
-Use `'Black'` for dark backgrounds, `'White'` for light. For custom slide backgrounds, use the closest named color — **not hex**.
+**Hex strings** (0.0.12+): `slide.setBackground('#C8102E')`
+
+**Designer aliases** (0.0.12+): `slide.setBackground('navy')`, `slide.setBackground('coral')`, `slide.setBackground('terracotta')` etc.
 
 ### Slide dimensions
 
