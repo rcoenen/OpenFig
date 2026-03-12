@@ -155,10 +155,14 @@ Handled automatically:
 ### 1.7 — Slide management
 
 ```js
-// Add — clones a symbol as a new slide
+// Add from template — clones a symbol as a new slide
 const slide = deck.addSlide(sym)
 const slide = deck.addSlide(sym, { after: deck.slides[2] })
 const slide = deck.addSlide(sym, { name: 'My Slide' })
+
+// Add blank — no template, build from scratch             ✅ Validated
+const slide = deck.addBlankSlide()
+const slide = deck.addBlankSlide({ name: 'Custom', background: 'Blue' })
 
 // Remove — sets phase REMOVED, never filters nodeChanges
 deck.removeSlide(slide)
@@ -436,6 +440,7 @@ await slide.addImage(x, y, w, h, 'photo.jpg')              // ✅
 
 // Slide management
 deck.addSlide(sym, { after: slide, name: 'New' })         // ✅
+deck.addBlankSlide({ name: 'Custom', background: 'Blue' })// ✅
 deck.removeSlide(slide)                                    // ✅
 deck.moveSlide(slide, 0)                                   // ✅
 ```
