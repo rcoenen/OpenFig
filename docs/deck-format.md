@@ -168,7 +168,8 @@ Known node types:
 | `COMPONENT_SET` | Set of component variants |
 | `TEXT` | Text node |
 | `RECTANGLE` | Rectangle shape |
-| `ROUNDED_RECTANGLE` | Rounded rectangle (also used for image placeholders) |
+| `ROUNDED_RECTANGLE` | Basic rectangle drawn with the rectangle tool; also used for image placeholders |
+| `SHAPE_WITH_TEXT` | Shape drawn with the "shape" tool in Slides — complex internal structure (see below) |
 | `ELLIPSE` | Ellipse shape |
 | `VECTOR` | Vector path |
 | `LINE` | Line |
@@ -361,6 +362,117 @@ To produce a valid `canvas.fig`:
    [8B prelude][4B version][4B schema_len][schema][4B msg_len][msg][optional chunks...]
 5. Pack into ZIP with thumbnail.png, meta.json, images/
 ```
+
+---
+
+## Shape Nodes
+
+### ROUNDED_RECTANGLE
+
+The simplest freestanding shape — produced by the rectangle tool. Fill and stroke
+live **directly on the node**, not in any sub-structure.
+
+```javascript
+{
+  guid: { sessionID: 1, localID: 85 },
+  type: 'ROUNDED_RECTANGLE',
+  phase: 'CREATED',
+  name: 'Rectangle 1',
+  parentIndex: { guid: slideGuid, position: '#' },
+  visible: true,
+  opacity: 1,
+  size: { x: 300, y: 300 },
+  transform: { m00: 1, m01: 0, m02: 740, m10: 0, m11: 1, m12: 100 },  // m02=x, m12=y
+  strokeWeight: 1,
+  strokeAlign: 'INSIDE',   // 'INSIDE' | 'OUTSIDE' | 'CENTER'
+  strokeJoin: 'MITER',
+  fillPaints: [{
+    type: 'SOLID',
+    color: { r: 0.878, g: 0.243, b: 0.102, a: 1 },  // normalized 0-1 floats
+    opacity: 1,
+    visible: true,
+    blendMode: 'NORMAL',
+    // colorVar is optional — omit when using raw RGB
+  }],
+  fillGeometry: [{ windingRule: 'NONZERO', commandsBlob: 17, styleID: 0 }],  // cached, may be omittable
+  // editInfo: omit when creating new nodes
+}
+```
+
+**Key facts:**
+- Position: `transform.m02` = x, `transform.m12` = y
+- Size: `size.x` = width, `size.y` = height
+- `fillGeometry` references a blob by index — unknown if required (Figma may recompute)
+- Also used for image placeholder overrides (see Symbol Overrides section)
+
+### SHAPE_WITH_TEXT
+
+Produced by the "shape" tool in Figma Slides. Much more complex — fill lives inside
+`nodeGenerationData.overrides`, not directly on the node. Uses internal sub-nodes
+with `sessionID: 40000000`.
+
+**Prefer `ROUNDED_RECTANGLE` for programmatic shape creation.**
+
+```javascript
+{
+  type: 'SHAPE_WITH_TEXT',
+  shapeWithTextType: 'SQUARE',  // 'SQUARE' | 'RECTANGLE' | others TBD
+  size: { x: 600, y: 600 },
+  transform: { m00: 1, m01: 0, m02: 100, m10: 0, m11: 1, m12: 100 },
+  nodeGenerationData: {
+    overrides: [{
+      guidPath: { guids: [{ sessionID: 40000000, localID: 0 }] },
+      styleIdForFill: { guid: { sessionID: 0xFFFFFFFF, localID: 0xFFFFFFFF } },
+      fillPaints: [{ type: 'SOLID', color: {...}, ... }],
+      // ... many more fields
+    }]
+  },
+  derivedImmutableFrameData: { ... }  // cached geometry
+}
+```
+
+---
+
+## Color Variables (Light Slides theme)
+
+Figma Slides ships a built-in `VARIABLE_SET "Light slides"` in every deck.
+These variables are referenced by `colorVar.value.alias.guid` in `fillPaints`.
+
+When creating shapes with raw RGB, `colorVar` can be **omitted entirely**.
+When binding to a theme color, reference the variable by GUID.
+
+Variable GUIDs are consistent within a deck (always `sessionID: 1`).
+
+| Name | GUID | Hex | r | g | b |
+|------|------|-----|---|---|---|
+| Pale Purple | 1:11 | #7F699B | 0.498 | 0.412 | 0.608 |
+| Violet | 1:12 | #3D38F5 | 0.239 | 0.220 | 0.961 |
+| Pale Blue | 1:13 | #667799 | 0.400 | 0.467 | 0.600 |
+| Blue | 1:14 | #0C8CE9 | 0.047 | 0.549 | 0.914 |
+| Pale Teal | 1:15 | #518394 | 0.318 | 0.514 | 0.580 |
+| Teal | 1:16 | #0887A0 | 0.031 | 0.529 | 0.627 |
+| Pale Green | 1:17 | #678E79 | 0.404 | 0.557 | 0.475 |
+| Green | 1:18 | #198F51 | 0.098 | 0.561 | 0.318 |
+| Pale Yellow | 1:19 | #AD7F00 | 0.678 | 0.498 | 0.000 |
+| Pale Persimmon | 1:20 | #D4693B | 0.831 | 0.412 | 0.231 |
+| Persimmon | 1:21 | #F65009 | 0.965 | 0.314 | 0.035 |
+| Red | 1:22 | #E03E1A | 0.878 | 0.243 | 0.102 |
+| Pale Pink | 1:23 | #AB5998 | 0.671 | 0.349 | 0.596 |
+| Pale Red | 1:24 | #D4583B | 0.831 | 0.345 | 0.231 |
+| Pink | 1:25 | #F316B0 | 0.953 | 0.086 | 0.690 |
+| Grey | 1:26 | #CFCFCF | 0.813 | 0.813 | 0.813 |
+| White | 1:27 | #FFFFFF | 1.000 | 1.000 | 1.000 |
+| Color 3 | 1:28 | #000000 | 0.000 | 0.000 | 0.000 |
+| Orange | 1:29 | #DE7D02 | 0.871 | 0.490 | 0.008 |
+| Pale Violet | 1:30 | #6A699B | 0.416 | 0.412 | 0.608 |
+| Yellow | 1:31 | #F3C11B | 0.953 | 0.757 | 0.106 |
+| Purple | 1:32 | #8A38F5 | 0.541 | 0.220 | 0.961 |
+| Black | 1:33 | #000000 | 0.000 | 0.000 | 0.000 |
+
+> Note: `Color 3` and `Black` both resolve to `#000000`.
+> GUIDs above are from the "Light slides" variable set and are consistent across decks
+> that use this theme. A second duplicate set exists at higher localIDs (1:48–1:81) —
+> these appear to be a copy; the first set (1:11–1:33) is the canonical one.
 
 ---
 
