@@ -6,7 +6,7 @@ description: >
   clone or remove slides, or produce a .deck file for Figma Slides.
   Powered by FigmaTK under the hood.
 metadata:
-  version: "0.0.13"
+  version: "0.0.14"
 ---
 
 # FigmaTK Skill
@@ -32,30 +32,36 @@ To let the user view the result: tell them to **open the file in Figma Desktop**
 
 ## Path A — Create from Scratch (High-Level API)
 
-Use this when the user wants a new presentation. Write a Node.js script and execute it.
+Use this when the user wants a new presentation. Follow these steps **in order, every time, no exceptions**.
 
-### Setup (required before running any script)
+### Step 1 — Set up workspace (MANDATORY FIRST STEP — never skip)
 
-The plugin cache does not include `node_modules`. Always install figmatk into a local workspace first:
+The environment has no `node_modules`. **Before writing any script**, run this exact command:
 
 ```bash
 mkdir -p /tmp/figmatk-ws && cd /tmp/figmatk-ws && npm init -y && npm install figmatk
 ```
 
-Then write your script inside `/tmp/figmatk-ws/` and run it from there:
+Do not proceed to Step 2 until this command succeeds.
 
-```bash
-node /tmp/figmatk-ws/my-deck.mjs
-```
+### Step 2 — Write the script to `/tmp/figmatk-ws/deck.mjs`
 
-> **Import:** always use the bare specifier `import { Deck } from 'figmatk'` — Node will resolve it from the local `node_modules` in the workspace.
+**Always write the script to `/tmp/figmatk-ws/deck.mjs`** — not to the current directory, not to any other path.
+
+**Always use the bare specifier** `import { Deck } from 'figmatk'` — never a file path import.
 
 ```javascript
 import { Deck } from 'figmatk';
 
+function hex(h) {
+  return { r: parseInt(h.slice(1,3),16)/255, g: parseInt(h.slice(3,5),16)/255, b: parseInt(h.slice(5,7),16)/255 };
+}
+
 const deck = await Deck.create('My Presentation');
 
-const slide = deck.addBlankSlide();          // template blank slide auto-removed
+// Each call to addBlankSlide() returns a new blank slide.
+// The template blank slide is auto-removed on the first call.
+const slide = deck.addBlankSlide();
 slide.setBackground('Black');                // named color — see list below
 slide.addText('Slide Title', {
   style: 'Title', color: 'White',
@@ -66,8 +72,17 @@ slide.addText('Subtitle', {
   x: 64, y: 240, width: 1200, align: 'LEFT'
 });
 
-await deck.save('/path/to/output.deck');
+await deck.save('/tmp/my-presentation.deck');
+console.log('Done — open /tmp/my-presentation.deck in Figma Desktop');
 ```
+
+### Step 3 — Run the script
+
+```bash
+node /tmp/figmatk-ws/deck.mjs
+```
+
+If this fails, check the error and fix the script — **do not change the workspace setup or the import path**.
 
 ### ⚠️ Critical gotchas
 
