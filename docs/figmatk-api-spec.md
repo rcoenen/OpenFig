@@ -280,10 +280,24 @@ frame.addText('Body', { style: 'Body 1' })                                      
 
 Available named styles: Title, Header 1, Header 2, Header 3, Body 1, Body 2, Body 3, Note.
 
+**Validated (advanced):**
+- Per-run formatting ✅ — bold, italic, bold+italic via `styleOverrideTable` + `characterStyleIDs`
+- Text decoration ✅ — underline (`textDecoration: 'UNDERLINE'`), strikethrough (`textDecoration: 'STRIKETHROUGH'`)
+- Hyperlinks ✅ — `hyperlink: { url }` on style override entry
+
+```js
+slide.addText([
+  { text: 'Normal ' },
+  { text: 'bold', bold: true },
+  { text: ' and ' },
+  { text: 'italic', italic: true },
+  { text: ' with ' },
+  { text: 'a link', hyperlink: 'https://example.com' },
+], { style: 'Body 1' })
+```
+
 **Still unknown:**
-- Per-run formatting (bold + italic in same text box) — may require `styleOverrideTable`
 - Paragraph-level spacing and indentation
-- Text decoration (underline, strikethrough)
 - Text lists (bulleted, numbered)
 
 ---
