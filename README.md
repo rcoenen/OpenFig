@@ -218,45 +218,9 @@ await deck.saveDeck('output.deck');
 | `deck.saveDeck(path, opts?)` | `Promise<number>` | Write complete `.deck` ZIP |
 | `deck.saveFig(path)` | `Promise<void>` | Write raw `.fig` binary |
 
-## Figma Binary Format
+## `.deck` File Format
 
-A `.deck` file is a ZIP archive containing:
-
-| File | Description |
-|------|-------------|
-| `canvas.fig` | Binary Figma document |
-| `thumbnail.png` | Deck thumbnail |
-| `meta.json` | `{ file_name, version, ... }` |
-| `images/` | Image assets, each named by its SHA-1 hash (no extension) |
-
-The `canvas.fig` binary layout:
-
-```
-[8 bytes]  Prelude — "fig-deck", "fig-kiwi", or "fig-jam."
-[4 bytes]  Version — uint32 little-endian
-[4 bytes]  Chunk 0 length
-[N bytes]  Chunk 0 — Kiwi binary schema (deflateRaw compressed)
-[4 bytes]  Chunk 1 length
-[N bytes]  Chunk 1 — Message data (zstd compressed)
-[...]      Optional additional chunks (pass through)
-```
-
-The message contains `nodeChanges[]` (every node in the document) and `blobs[]` (binary data for paths, etc.). Nodes form a tree via `parentIndex.guid`. Each node has a `type` (DOCUMENT, CANVAS, SLIDE, INSTANCE, TEXT, SYMBOL, etc.) and optionally `symbolData` with `symbolOverrides` for component instances.
-
-## Format Rules
-
-Important constraints discovered while building this toolkit. Violating any of them produces silent failures or crashes:
-
-| Rule | Detail |
-|------|--------|
-| **Chunk 1 = zstd** | Figma silently rejects deflateRaw for the message chunk |
-| **`styleIdForFill` required for images** | Must be `{ guid: { sessionID: 0xFFFFFFFF, localID: 0xFFFFFFFF } }` — without this, Figma ignores `fillPaints` overrides entirely |
-| **`imageThumbnail` required** | Image overrides need a real ~320px PNG thumbnail in `images/`, referenced by SHA-1 hash |
-| **No empty strings** | `''` crashes Figma — use `' '` (space) for blank fields |
-| **Never delete nodes** | Set `phase: 'REMOVED'` instead — Figma expects all nodes to remain in `nodeChanges` |
-| **`thumbHash: new Uint8Array(0)`** | Must be a typed array, not `{}` — kiwi-schema enforces this |
-| **Delete `derivedTextData`** | Stale layout cache — must be removed when modifying text directly on nodes (not needed for overrides) |
-| **Don't JSON-clone nodes** | `JSON.parse(JSON.stringify())` corrupts `Uint8Array` fields — use `deepClone()` |
+See **[docs/deck-format.md](docs/deck-format.md)** for the full binary format specification — archive structure, chunk layout, node types, symbol overrides, image override requirements, cloning rules, and all known format constraints.
 
 ## Architecture
 
