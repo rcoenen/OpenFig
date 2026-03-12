@@ -38,12 +38,15 @@ that drives this spec. See `docs/format/` for the `.deck` file format specificat
 ```
 figmatk/
 ├── lib/
-│   ├── fig-deck.mjs        # existing: codec layer (FigDeck)
-│   ├── node-helpers.mjs    # existing: nid, parseId, ov, positionChar, etc.
-│   ├── image-helpers.mjs   # existing: imageOv, hexToHash, hashToHex
-│   ├── deep-clone.mjs      # existing: typed-array-safe deepClone
-│   └── api.mjs             # NEW: Deck, Slide, Symbol, TextNode, ImageNode
-└── commands/               # existing CLI commands (unchanged)
+│   ├── fig-deck.mjs        # codec layer (FigDeck)
+│   ├── node-helpers.mjs    # nid, parseId, ov, positionChar, etc.
+│   ├── image-helpers.mjs   # imageOv, hexToHash, hashToHex
+│   ├── image-utils.mjs     # sharp-based getImageDimensions, generateThumbnail
+│   ├── deep-clone.mjs      # typed-array-safe deepClone
+│   ├── api.mjs             # Deck, Slide, Symbol, TextNode, ImageNode, FrameProxy
+│   └── blank-template.deck # bundled blank deck for Deck.create()
+├── docs/format/            # .deck file format specification
+└── commands/               # CLI commands (unchanged)
 ```
 
 The API layer (`api.mjs`) is a pure wrapper — it adds no new codec logic,
@@ -68,12 +71,16 @@ No format research needed; proven by existing figmatk commands.
 
 Implemented in `lib/api.mjs` as `Deck`, `Slide`, `Symbol`, `TextNode`, `ImageNode`.
 
-### 1.1 — Open / Save / Meta
+### 1.1 — Open / Save / Create / Meta ✅ Validated
 
 ```js
 import { Deck } from 'figmatk'
 
+// Open existing
 const deck = await Deck.open('slides.deck')
+
+// Create from scratch (includes Light Slides theme, 8 text styles, 23 colors)
+const deck = await Deck.create({ name: 'My Presentation' })
 
 deck.meta.file_name     // str
 deck.meta.version       // str
@@ -139,7 +146,7 @@ slide.setImage('Photo', buffer)             // Buffer also accepted
 
 Handled automatically:
 - SHA-1 hash of full image
-- Thumbnail generation (~320px via `sips`)
+- Thumbnail generation (~320px via `sharp`)
 - Both written to `images/` dir in ZIP
 - `styleIdForFill` sentinel `0xFFFFFFFF:0xFFFFFFFF` always set
 - `thumbHash: new Uint8Array(0)` always set
@@ -164,11 +171,11 @@ deck.moveSlide(slide, 0)      // move to front
 `.deck` fixtures. Inventory reads are stable. Text + image roundtrips verified
 in Figma.
 
-> **Status:** Code complete. Needs fixture testing and Figma validation to close.
+> **Status:** Code complete. Core operations validated in Figma.
 
 ---
 
-## Phase 2 — Unknown Territory (Research & Validate) 🔬 Pending
+## Phase 2 — Unknown Territory (Research & Validate) 🔬 In Progress
 
 **Goal:** Investigate the 🔬 Unknown features from the feature map.
 Each item is a mini research task: write a test, confirm in Figma, then ship.
@@ -245,61 +252,49 @@ independently.
 
 ---
 
-### 2.5 — Text formatting 🔬
+### 2.5 — Text creation & formatting ✅ Validated (basic) / 🔬 (advanced)
 
-Work top-down: frame → paragraph → run. Stop at first failure and document.
-
-**Preferred (Slides-mode) API — use named text styles:**
+**Implemented and validated in Figma:**
 
 ```js
-slide.addText('Hello World', { style: 'Title' })       // named style
-slide.addText('Body copy', { style: 'Body 1' })        // named style
+// Named text styles (Slides-mode-first)
+slide.addText('Hello World', { style: 'Title' })                    // ✅
+slide.addText('Body copy', { style: 'Body 1' })                     // ✅
+slide.addText('Centered', { style: 'Header 2', align: 'CENTER' })   // ✅
+
+// Custom font (detaches from named style)
+slide.addText('Custom', { font: 'Georgia', fontStyle: 'Bold', fontSize: 48 })  // ✅
+
+// Colors
+slide.addText('Colored', { style: 'Title', color: { r: 1, g: 0, b: 0 } })     // ✅
+
+// Auto-layout frame with text children
+const frame = slide.addFrame(128, 400, 1200, 200, { spacing: 24 })              // ✅
+frame.addText('Title', { style: 'Title' })                                       // ✅
+frame.addText('Body', { style: 'Body 1' })                                       // ✅
 ```
 
 Available named styles: Title, Header 1, Header 2, Header 3, Body 1, Body 2, Body 3, Note.
-Each maps to a `styleIdForText` reference to the built-in Light Slides theme styles.
-
-**Raw (Design-mode) overrides — optional:**
-
-```js
-slide.addText('Custom', {
-  style: 'Body 1',                     // base style
-  font: { family: 'Georgia' },         // override font
-  fontSize: 28,                        // override size
-  color: { r: 1, g: 0, b: 0 },        // override fill
-  align: 'center',                     // override alignment
-})
-```
-
-**Format findings (validated from reference deck):**
-- TEXT node on slide: `textData.characters`, `fontName`, `fontSize`, `lineHeight`, `letterSpacing`
-- `textAutoResize: 'HEIGHT'` = fixed width, hug height (standard for slides)
-- `styleIdForText` references named style by GUID
-- `derivedTextData` is cached glyph layout — safe to omit on creation
-- Text nodes are typically inside a FRAME (auto-layout container), not direct slide children
-- FRAME with `stackMode: 'VERTICAL'` and `stackSpacing: 24` handles layout
 
 **Still unknown:**
 - Per-run formatting (bold + italic in same text box) — may require `styleOverrideTable`
 - Paragraph-level spacing and indentation
-
-**Validated:**
-- Custom fonts: set `fontName: { family, style, postscript }` + sentinel `styleIdForText`
-  (0xFFFFFFFF:0xFFFFFFFF) to detach from named style. No font embedding — Figma resolves
-  by name at runtime. Needs generation + Figma roundtrip validation.
+- Text decoration (underline, strikethrough)
+- Text lists (bulleted, numbered)
 
 ---
 
-### 2.6 — Slide background 🔬
+### 2.6 — Slide background ✅ Validated
 
 ```js
-slide.background.solid(255, 255, 255)
-slide.background.image('bg.jpg')
-slide.background.none()
+slide.setBackground('Blue')                    // named color
+slide.setBackground({ r: 0.1, g: 0.1, b: 0.3 })  // raw RGB
+slide.setBackground('Red', { opacity: 0.5 })  // with opacity
+slide.background                               // read: { r, g, b, a }
 ```
 
-**Investigate:** SLIDE node fill fields. Similar to shape fill but on the
-slide node itself.
+Named colors resolve from the Light Slides VARIABLE nodes.
+Image backgrounds not yet investigated.
 
 ---
 
@@ -336,9 +331,11 @@ slide.addRectangle(x, y, w, h, { fill: { r: 0.5, g: 0, b: 0 } })
 
 **Status:**
 - `addRectangle` — ✅ validated, ROUNDED_RECTANGLE node
-- `addText` — format learned (TEXT + FRAME), needs validation
-- `addFrame` — format learned, needs validation
-- Others — need reference decks
+- `addText` — ✅ validated (named styles, custom fonts, colors, alignment)
+- `addFrame` — ✅ validated (auto-layout vertical/horizontal)
+- `addEllipse` — ❓ needs reference deck
+- `addLine` — ❓ needs reference deck
+- `addImage` (freestanding) — ❓ needs investigation
 
 ---
 
@@ -402,42 +399,45 @@ From the feature map — these have no Figma Slides equivalent:
 ```js
 import { Deck } from 'figmatk'
 
-// Open / save
-const deck = await Deck.open('slides.deck')
-await deck.save('output.deck')
+// Create / open / save
+const deck = await Deck.create({ name: 'My Deck' })     // ✅ from scratch
+const deck = await Deck.open('slides.deck')               // ✅ existing file
+await deck.save('output.deck')                             // ✅
 
 // Meta
 deck.meta.file_name
 deck.meta.version
 
 // Slides + symbols
-deck.slides                        // Slide[]
-deck.symbols                       // Symbol[]
+deck.slides                                                // ✅ Slide[]
+deck.symbols                                               // ✅ Symbol[]
 
-// Slide
-slide.name
-slide.index
-slide.guid
-slide.textNodes                    // TextNode[]
-slide.imageNodes                   // ImageNode[]
-slide.shapes                       // Shape[]  (Phase 2+)
+// Slide properties
+slide.name                                                 // ✅
+slide.index                                                // ✅
+slide.guid                                                 // ✅
+slide.setBackground('Blue')                                // ✅ named or RGB
+slide.background                                           // ✅ read { r, g, b, a }
 
-// Text
-slide.setText('Title', 'Hello')
-slide.setTexts({ Title: 'A', Body: 'B' })
+// Template overrides (symbol instances)
+slide.setText('Title', 'Hello')                            // ✅
+slide.setTexts({ Title: 'A', Body: 'B' })                 // ✅
+slide.setImage('Photo', 'hero.jpg')                        // ✅
+slide.textNodes                                            // ✅ TextNode[]
+slide.imageNodes                                           // ✅ ImageNode[]
 
-// Image
-slide.setImage('Photo', 'hero.jpg')
+// Direct creation (freestanding nodes on slide)
+slide.addText('Hello', { style: 'Title', color: { r: 1, g: 1, b: 1 } })  // ✅
+slide.addText('Custom', { font: 'Georgia', fontSize: 48 })                // ✅
+slide.addRectangle(x, y, w, h, { fill: { r: 1, g: 0, b: 0 } })          // ✅
+slide.addFrame(x, y, w, h, { direction: 'VERTICAL', spacing: 24 })       // ✅
+slide.addEllipse(x, y, w, h)                              // ❓ not yet
+slide.addImage(x, y, w, h, 'photo.jpg')                   // ❓ not yet
 
 // Slide management
-deck.addSlide(sym, { after: slide, name: 'New' })
-deck.removeSlide(slide)
-deck.moveSlide(slide, 0)
-
-// Shape (Phase 2+)
-shape.x = 100
-shape.fill.solid(255, 0, 0)
-slide.addRectangle(x, y, w, h)
+deck.addSlide(sym, { after: slide, name: 'New' })         // ✅
+deck.removeSlide(slide)                                    // ✅
+deck.moveSlide(slide, 0)                                   // ✅
 ```
 
 ---
