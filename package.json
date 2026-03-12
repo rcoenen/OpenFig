@@ -1,10 +1,10 @@
 {
   "name": "figmatoolkit",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "FigmaToolKit — Swiss-army knife CLI for Figma .deck and .fig files",
   "type": "module",
   "bin": {
-    "figmatk": "./cli.mjs"
+    "figmatk": "cli.mjs"
   },
   "exports": {
     "./deck": "./lib/fig-deck.mjs",

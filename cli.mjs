@@ -2,7 +2,7 @@
 /**
  * FigmaTK — Swiss-army knife for Figma .deck / .fig files.
  *
- * Usage: node figmatk/cli.mjs <command> [args...]
+ * Usage: figmatk <command> [args...]
  *
  * Commands:
  *   inspect        Show document structure (node hierarchy tree)
@@ -39,7 +39,7 @@ if (!command || command === '--help' || command === '-h') {
   console.log('  clone-slide    Duplicate a template slide with new content');
   console.log('  remove-slide   Mark slides as REMOVED');
   console.log('  roundtrip      Decode and re-encode (pipeline validation)');
-  console.log('\nUsage: node figmatk/cli.mjs <command> [args...]');
+  console.log('\nUsage: figmatk <command> [args...]');
   process.exit(0);
 }
 
