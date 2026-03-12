@@ -335,7 +335,7 @@ slide.addRectangle(x, y, w, h, { fill: { r: 0.5, g: 0, b: 0 } })
 - `addFrame` — ✅ validated (auto-layout vertical/horizontal)
 - `addEllipse` — ❓ needs reference deck
 - `addLine` — ❓ needs reference deck
-- `addImage` (freestanding) — ❓ needs investigation
+- `addImage` (freestanding) — ✅ validated, ROUNDED_RECTANGLE with IMAGE fillPaint
 
 ---
 
@@ -432,7 +432,7 @@ slide.addText('Custom', { font: 'Georgia', fontSize: 48 })                // ✅
 slide.addRectangle(x, y, w, h, { fill: { r: 1, g: 0, b: 0 } })          // ✅
 slide.addFrame(x, y, w, h, { direction: 'VERTICAL', spacing: 24 })       // ✅
 slide.addEllipse(x, y, w, h)                              // ❓ not yet
-slide.addImage(x, y, w, h, 'photo.jpg')                   // ❓ not yet
+await slide.addImage(x, y, w, h, 'photo.jpg')              // ✅
 
 // Slide management
 deck.addSlide(sym, { after: slide, name: 'New' })         // ✅
