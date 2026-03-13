@@ -42,6 +42,9 @@ const JUST_FONTS_REF  = join(__dirname, '../../decks/reference/just-fonts');
 const SVG_DECK = join(__dirname, '../../decks/reference/svg-deck.deck');
 const SVG_REF  = join(__dirname, '../../decks/reference/svg-deck');
 
+const FOUR_TEXT_COL_DECK = join(__dirname, '../../decks/reference/4-text-column.deck');
+const FOUR_TEXT_COL_REF  = join(__dirname, '../../decks/reference/4-text-column');
+
 /** Render a slide to PNG bytes at native 1920×1080. */
 async function renderSlide(deck, slide) {
   const svg = slideToSvg(deck, slide);
@@ -52,21 +55,18 @@ const reportRows = [];
 
 describe('oil-machinations deck rendering', () => {
   let deck;
-  let slides;
 
   // Load deck once before all tests
   it('loads deck successfully', async () => {
     deck   = await FigDeck.fromDeckFile(DECK_PATH);
-    slides = deck.getActiveSlides();
-    expect(slides.length).toBe(7);
+    expect(deck.getActiveSlides().length).toBe(7);
   });
 
   for (let i = 1; i <= 7; i++) {
     it(`slide ${i} SSIM ≥ ${SSIM_THRESHOLDS[i] ?? 0.70}`, async () => {
       if (!deck) deck = await FigDeck.fromDeckFile(DECK_PATH);
-      if (!slides) slides = deck.getActiveSlides();
 
-      const slide    = slides[i - 1];
+      const slide    = deck.getSlide(i);
       const refPath  = join(REF_DIR, `page-${i}.png`);
 
       if (!existsSync(refPath)) {
@@ -92,11 +92,10 @@ describe('oil-machinations deck rendering', () => {
 describe('just-fonts deck rendering', () => {
   it('slide 1 SSIM ≥ 0.99', async () => {
     const deck    = await FigDeck.fromDeckFile(JUST_FONTS_DECK);
-    const slides  = deck.getActiveSlides();
-    expect(slides.length).toBe(1);
+    expect(deck.getActiveSlides().length).toBe(1);
 
     const refPath = join(JUST_FONTS_REF, 'page-1.png');
-    const png     = await renderSlide(deck, slides[0]);
+    const png     = await renderSlide(deck, deck.getSlide(1));
     const outPath = join('/tmp', 'figmatk-test-just-fonts-1.png');
     writeFileSync(outPath, Buffer.from(png));
 
@@ -114,11 +113,10 @@ describe('just-fonts deck rendering', () => {
 describe('svg-deck rendering (VECTOR nodes)', () => {
   it('slide 1 SSIM ≥ 0.90', async () => {
     const deck    = await FigDeck.fromDeckFile(SVG_DECK);
-    const slides  = deck.getActiveSlides();
-    expect(slides.length).toBe(1);
+    expect(deck.getActiveSlides().length).toBe(1);
 
     const refPath = join(SVG_REF, 'page-1.png');
-    const png     = await renderSlide(deck, slides[0]);
+    const png     = await renderSlide(deck, deck.getSlide(1));
     const outPath = join('/tmp', 'figmatk-test-svg-deck-1.png');
     writeFileSync(outPath, Buffer.from(png));
 
@@ -129,6 +127,28 @@ describe('svg-deck rendering (VECTOR nodes)', () => {
     const score = await computeSsim(Buffer.from(png), refPath);
     reportRows.push(await buildReportRow({ slideNumber: 'svg-1', renderedPng: Buffer.from(png), refPath, score }));
     console.log(`  slide 1  SSIM=${score.toFixed(4)}  →  ${outPath}`);
+    expect(score).toBeGreaterThanOrEqual(0.90);
+  });
+});
+
+describe('4-text-column deck rendering', () => {
+  it('slide 1 SSIM ≥ 0.90', async () => {
+    const deck    = await FigDeck.fromDeckFile(FOUR_TEXT_COL_DECK);
+    expect(deck.getActiveSlides().length).toBe(1);
+
+    const refPath = join(FOUR_TEXT_COL_REF, 'page-1.png');
+    const png     = await renderSlide(deck, deck.getSlide(1));
+    const outPath = join('/tmp', 'figmatk-test-4-text-column-1.png');
+    writeFileSync(outPath, Buffer.from(png));
+
+    if (!existsSync(refPath)) {
+      console.warn(`  ⚠ Reference missing: ${refPath} — skipping SSIM`);
+      return;
+    }
+    const score = await computeSsim(Buffer.from(png), refPath);
+    reportRows.push(await buildReportRow({ slideNumber: '4textcol-1', renderedPng: Buffer.from(png), refPath, score }));
+    console.log(`  slide 1  SSIM=${score.toFixed(4)}  →  ${outPath}`);
+    // 4-text-column: four numbered columns + rotated coat-of-arms seal backdrop.
     expect(score).toBeGreaterThanOrEqual(0.90);
   });
 });

@@ -499,7 +499,7 @@ server.tool(
       return { content: [{ type: 'text', text: `Slide ${slide} does not exist — deck has ${slides.length} slides` }] };
     }
 
-    const svg = slideToSvg(deck, slides[slide - 1]);
+    const svg = slideToSvg(deck, deck.getSlide(slide));
 
     // Build render options
     const renderOpts = {};
