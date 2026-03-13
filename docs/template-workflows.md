@@ -83,7 +83,17 @@ Example annotation payload:
 ### Instantiate a new deck
 
 1. `figmatk_list_template_layouts`
-2. `figmatk_create_from_template`
+2. Build a layout inventory from that catalog
+3. Choose the subset of layouts you actually want to use
+4. Order those chosen layouts to match the target presentation
+5. `figmatk_create_from_template`
+
+Important:
+
+- a template is a layout library, not a fixed ordered form
+- you do not need to use every layout
+- you may reuse the same layout multiple times
+- the output order is defined by the `slides` array you pass to `figmatk_create_from_template`
 
 `figmatk_create_from_template` accepts:
 

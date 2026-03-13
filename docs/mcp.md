@@ -115,11 +115,23 @@ See [template-workflows.md](template-workflows.md) for naming conventions and st
 ### Populate a template
 
 1. `figmatk_list_template_layouts`
-2. Choose layouts by content structure, not just by visual resemblance.
-3. Pass `text` values by slot name when possible.
-4. Pass `images` values only for explicit image slots unless the user clearly wants heuristic placeholders overwritten.
-5. `figmatk_create_from_template`
-6. Validate with `figmatk_list_text` or a manual open in Figma Desktop.
+2. Treat the result as a layout library, not a fixed slide sequence.
+3. Classify each candidate layout by purpose and content capacity.
+4. Plan the target deck slide by slide, choosing only the layouts you want to use.
+5. Pass `text` values by slot name when possible.
+6. Pass `images` values only for explicit image slots unless the user clearly wants heuristic placeholders overwritten.
+7. `figmatk_create_from_template`
+8. Validate with `figmatk_list_text` or a manual open in Figma Desktop.
+
+Anti-pattern:
+
+- walking through the template from start to finish and filling every layout as if it were a form
+
+Preferred pattern:
+
+- inventory the layouts
+- select a subset
+- order them for the presentation you actually want to build
 
 ### Edit an existing deck
 
@@ -134,6 +146,7 @@ See [template-workflows.md](template-workflows.md) for naming conventions and st
 
 - `.deck` files are binary ZIP archives. Do not open them as text.
 - The repo supports both GitHub-backed plugin metadata and a local `dist/figmatk.mcpb` bundle.
+- `figmatk_create_from_template` instantiates only the layouts you pass in the `slides` array, in that array's order.
 - Template discovery scans all main-canvas `SLIDE_ROW` nodes, not only the first row.
 - `Internal Only Canvas` assets are preserved during wrapping and instantiation.
 - Special nodes such as device mockups and interactive slide elements are preserved during cloning, even when FigmaTK cannot synthesize them from scratch.

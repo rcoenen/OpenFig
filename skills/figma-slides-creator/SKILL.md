@@ -62,11 +62,13 @@ To let the user view the result: tell them to **open the file in Figma Desktop**
 
 ## Default Workflow
 
-1. Inspect the template or deck.
-2. Pick the minimum set of layouts or edits needed.
-3. Populate text slots first, then image slots.
-4. Save to a new `/tmp/` output path.
-5. Sanity-check the result with `figmatk_list_text` or by opening it in Figma Desktop.
+1. Catalog the template or inspect the deck.
+2. Build a layout inventory: what each layout is for, what content structure it supports, and which elements are editable.
+3. Plan the target presentation slide by slide.
+4. Choose only the layouts needed for that presentation, in the order that best tells the story.
+5. Populate text slots first, then image slots.
+6. Save to a new `/tmp/` output path.
+7. Sanity-check the result with `figmatk_list_text` or by opening it in Figma Desktop.
 
 ---
 
@@ -74,7 +76,26 @@ To let the user view the result: tell them to **open the file in Figma Desktop**
 
 Use this path when the user provides a `.deck` template file. The output deck inherits all fonts, colors, spacing, and visual design from the template verbatim.
 
-### Step 1 — Inspect the template
+### Core rule
+
+A template is a **library of candidate layouts**, not a fixed slide sequence to fill from top to bottom.
+
+- Do not assume every template layout should be used.
+- Do not fill layouts in the template's existing order just because they appear that way.
+- It is normal to skip most layouts.
+- It is normal to reuse the same layout multiple times if it fits multiple slides.
+
+Wrong mental model:
+
+- treat the template like a form and fill each slide linearly
+
+Right mental model:
+
+- catalog the layout library
+- choose the best layouts for the target deck
+- instantiate only the selected subset in the desired presentation order
+
+### Step 1 — Catalog the template
 
 ```
 figmatk_list_template_layouts("/path/to/template.deck")
@@ -87,13 +108,24 @@ Returns a catalog of all available slide layouts. Each entry includes:
 - Image slots — explicit `slot:image:*` fields when present, otherwise fallback image candidates
 - Node IDs — usable for direct targeting when the template has not been fully annotated yet
 
-**Read the catalog carefully before picking layouts:**
+**Treat this output as a layout library inventory:**
 - Prefer layouts with explicit slot metadata when available
-- Match each slide's purpose to your content; the existing copy is often the best hint
+- Infer each layout's job: title, agenda, split content, quote, stat, comparison, section break, closing, and so on
+- Note content capacity: short headline, dense body copy, single image, multi-image, device mockup, etc.
+- Match each planned slide's purpose to the best available layout; the existing copy is often the best hint
 - Use slot names first, then node IDs, then raw node names when populating content
 - If a layout exposes no explicit image slots, treat heuristic image candidates as weaker signals and avoid overwriting decorative sample imagery unless the user clearly wants that
 
-### Step 2 — Create the deck
+Before instantiating anything, build a slide plan such as:
+
+- slide 1 -> cover layout
+- slide 2 -> agenda layout
+- slide 3 -> two-column problem/solution layout
+- slide 4 -> image-led evidence layout
+- slide 5 -> stat callout layout
+- slide 6 -> closing layout
+
+### Step 2 — Create the deck from the chosen subset
 
 ```
 figmatk_create_from_template({
@@ -108,6 +140,8 @@ figmatk_create_from_template({
 ```
 
 Only pass slots or node IDs that exist in the layout's catalog. Extra keys are silently ignored.
+
+The `slides` array is the presentation plan. Its order should match the desired output deck order, not the template's original order.
 
 ---
 
