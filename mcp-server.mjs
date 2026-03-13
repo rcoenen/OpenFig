@@ -436,7 +436,7 @@ server.tool(
 
 server.tool(
   'figmatk_list_template_layouts',
-  'Inspect a template or draft template .deck file and return available layouts with explicit text/image slot metadata. Call this before figmatk_create_from_template or figmatk_annotate_template_layout.',
+  'Inspect a template or draft template .deck file and return a layout library catalog with explicit text/image slot metadata. Use this to inventory candidate layouts, classify what each layout is for, and choose a subset before calling figmatk_create_from_template. Do not edit, remove, or reorder the source template as a way to build the output deck.',
   {
     template: z.string().describe('Path to the .deck template file'),
   },
@@ -460,7 +460,7 @@ server.tool(
 // ── figmatk_create_from_template ─────────────────────────────────────────
 server.tool(
   'figmatk_create_from_template',
-  'Create a new Figma Slides deck by cherry-picking layouts from a draft, published, or publish-like template .deck file and populating explicit text/image slots. Preserves colors, fonts, internal assets, and special nodes.',
+  'Create a new Figma Slides deck by selecting any ordered subset of layouts from a draft, published, or publish-like template .deck file and populating explicit text/image slots. The slides array defines the output order. This clones the chosen layouts into a new deck; do not remove, reorder, or mutate the source template to build the result. Works with flat-frame template slides as well as module-backed layouts, and preserves colors, fonts, internal assets, and special nodes.',
   {
     template: z.string().describe('Path to the source .deck template file'),
     output:   z.string().describe('Output path for the new .deck file (use /tmp/)'),
@@ -468,7 +468,7 @@ server.tool(
       slideId: z.string().describe('Slide ID from figmatk_list_template_layouts (e.g. "1:74")'),
       text:    z.record(z.string()).optional().describe('Map of text slot/name/nodeId -> value (e.g. { "title": "My Company" })'),
       images:  z.record(z.string()).optional().describe('Map of image slot/name/nodeId -> absolute image path (e.g. { "hero_image": "/tmp/photo.jpg" })'),
-    })).describe('Ordered list of slides to include, each referencing a template layout'),
+    })).describe('Ordered subset of template layouts to include in the output deck. The array order becomes the output deck order, regardless of the template\'s original order.'),
   },
   async ({ template, output, slides }) => {
     const bytes = await createFromTemplate(template, output, slides);

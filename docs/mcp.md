@@ -138,6 +138,12 @@ Preferred pattern:
 - select a subset
 - order them for the presentation you actually want to build
 
+Do not do this instead:
+
+- remove unused slides from the source template
+- reorder the source template to force a narrative sequence
+- inspect raw `FigDeck` internals or write custom generator scripts for normal template instantiation
+
 ### Edit an existing deck
 
 1. `figmatk_inspect`

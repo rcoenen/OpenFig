@@ -95,6 +95,13 @@ Right mental model:
 - choose the best layouts for the target deck
 - instantiate only the selected subset in the desired presentation order
 
+Forbidden when a template is available:
+
+- do not remove unused slides from the source template as a way to build the output deck
+- do not reorder source template slides to match the target narrative
+- do not inspect `FigDeck`, node internals, or CLI commands if `figmatk_list_template_layouts` and `figmatk_create_from_template` are available
+- do not write custom `.mjs` deck-building scripts for normal template instantiation
+
 ### Step 1 — Catalog the template
 
 ```
@@ -142,6 +149,8 @@ figmatk_create_from_template({
 Only pass slots or node IDs that exist in the layout's catalog. Extra keys are silently ignored.
 
 The `slides` array is the presentation plan. Its order should match the desired output deck order, not the template's original order.
+
+If a template contains flat slides rather than symbol instances or modules, this path still applies. Do not fall back to manual source-template surgery just because clone/remove commands are not a fit.
 
 ---
 
