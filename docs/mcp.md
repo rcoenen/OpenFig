@@ -13,6 +13,11 @@ This path uses the repository metadata in:
 - [plugin.json](/Users/rob/Dev/figmatk/.claude-plugin/plugin.json)
 - [marketplace.json](/Users/rob/Dev/figmatk/.claude-plugin/marketplace.json)
 
+Release note for this path:
+
+- In practice, Claude Cowork has only detected new figmatk releases reliably after the version bump was committed to `main` and the matching Git tag `vX.Y.Z` was pushed to GitHub.
+- Treat `push main` plus `push tag` as part of the required release process for the GitHub-backed plugin path.
+
 ### Option 2 — Local MCPB extension bundle
 
 Build the local extension bundle from the repository root:
