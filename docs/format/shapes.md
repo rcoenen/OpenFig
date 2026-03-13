@@ -72,6 +72,34 @@ Used to group and auto-lay-out child nodes (e.g., title + body text).
 
 Validated: vertical auto-layout with spacing, TEXT children positioned correctly ✅
 
+### Transforms
+
+FRAME nodes can be rotated and scaled, not just translated. The `transform` is a
+full 2×3 affine matrix:
+
+```javascript
+// Identity (no rotation): translate only
+transform: { m00: 1, m01: 0, m02: 50, m10: 0, m11: 1, m12: 989 }
+
+// Rotated ~10°:
+transform: { m00: 0.986, m01: -0.166, m02: 71, m10: 0.166, m11: 0.986, m12: -271 }
+```
+
+SVG: `matrix(m00,m10,m01,m11,m02,m12)` — note the Figma→SVG column swap.
+
+### Clipping (frameMaskDisabled)
+
+- `frameMaskDisabled: false` (default) → children are clipped to frame bounds
+- `frameMaskDisabled: true` → children can overflow the frame visually
+
+The rasterizer implements this as a `<clipPath>` matching the frame's size and
+corner radius.
+
+### Opacity
+
+`opacity` (0–1) applies to the entire subtree as group opacity. A FRAME at 0.15
+makes all its children 15% transparent as a group.
+
 ---
 
 ## SHAPE_WITH_TEXT ✅
@@ -274,3 +302,48 @@ Regions (variable, one per fill path):
 
 **Important:** A malformed vectorNetworkBlob causes silent corruption — the graphic
 disappears when duplicating slides.
+
+### Per-path fill overrides (styleOverrideTable)
+
+A single VECTOR can have different fill colors on different sub-paths (e.g. a
+coat-of-arms with red and white regions). Figma shows this as "Click + to replace
+mixed content" in the Fill inspector.
+
+```javascript
+fillGeometry: [
+  { commandsBlob: 522, windingRule: 'NONZERO', styleID: 2 },  // white
+  { commandsBlob: 523, windingRule: 'NONZERO', styleID: 0 },  // node-level fill
+]
+
+vectorData: {
+  styleOverrideTable: [
+    { styleID: 1, fillPaints: [] },                       // no fill (transparent)
+    { styleID: 2, fillPaints: [{ type: 'SOLID',
+        color: { r: 1, g: 1, b: 1 }, opacity: 1 }] },    // white override
+    { styleID: 3, cornerRadius: 0, strokeCap: 'NONE' },   // stroke-only props
+  ],
+}
+```
+
+- `styleID: 0` or absent → use node-level `fillPaints`
+- `styleID` matching table entry with `fillPaints` → use that fill
+- Empty `fillPaints: []` → no fill for that path
+
+### strokeGeometry (pre-expanded outlines)
+
+Figma pre-computes stroke outlines as filled shapes. `strokeGeometry[]` uses the
+same commandsBlob format as fillGeometry. The renderer fills these paths with
+the stroke color — they are NOT rendered as SVG strokes.
+
+```javascript
+{
+  strokePaints: [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 }, ... }],
+  strokeWeight: 2,
+  strokeGeometry: [
+    { windingRule: 'NONZERO', commandsBlob: 600, styleID: 0 },
+  ],
+}
+```
+
+For stroke-only vectors (no fillPaints, only strokePaints+strokeGeometry), the
+stroke geometry provides the only visible output.

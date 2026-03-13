@@ -19,18 +19,40 @@ dashed placeholder so renders never crash.
 | `SECTION` | `renderGroup` | Same as GROUP |
 | `BOOLEAN_OPERATION` | `renderGroup` | Same as GROUP |
 | `LINE` | `renderLine` | Uses full transform matrix for direction |
-| `VECTOR` | placeholder | Not yet implemented |
+| `VECTOR` | `renderVector` | Fill/stroke geometry decoding, per-path fills |
+| `INSTANCE` | `renderInstance` | Symbol resolution + overrides + scaling |
 | `STAR` | placeholder | Not yet implemented |
 | `POLYGON` | placeholder | Not yet implemented |
-| `INSTANCE` | placeholder | Needs symbol resolution + override application |
 
-### Position and Size
+### Position, Size, and Transforms
 
 All nodes use the same pattern:
 
 - **Position**: `transform.m02` (x), `transform.m12` (y) — relative to parent
 - **Size**: `size.x` (width), `size.y` (height)
 - **LINE** is special: uses full transform matrix `(m00, m10)` for direction vector
+
+#### Full Affine Transforms
+
+FRAME, GROUP, and INSTANCE nodes can be rotated and scaled, not just translated.
+The `svgTransform(node)` helper reads the full 2×3 affine matrix and emits either
+`translate(x,y)` for pure translations or `matrix(m00,m10,m01,m11,m02,m12)` when
+rotation/scale is present.
+
+**Precision matters**: Rotation/scale components use 6 decimal places (`toFixed(6)`).
+At 2dp, a 2% error on a 2000px element produces ~8px visual shift. Translation
+components use 2dp since they're absolute pixel offsets.
+
+```javascript
+// Pure translation: translate(50,989)
+// Rotated: matrix(0.986048,0.166459,-0.166459,0.986048,71.07,-271)
+```
+
+#### Node Opacity
+
+Any node with `opacity < 1` is wrapped in `<g opacity="...">` by `renderNode()`.
+This applies to the entire subtree, so a FRAME at 0.15 opacity makes all its
+children (vectors, text, etc.) 15% transparent as a group.
 
 ### Color Resolution
 
@@ -193,6 +215,131 @@ as data URIs.
 - Applied as SVG `letter-spacing` attribute on the `<text>` element
 - In glyph path: each run already starts at the correct absolute position
   (accounting for letter spacing), so the attribute only affects intra-run spacing
+
+## VECTOR Nodes
+
+VECTOR nodes contain paths stored as pre-computed binary blobs. The renderer
+decodes these and emits SVG `<path>` elements.
+
+### Fill Geometry
+
+`node.fillGeometry[]` — array of filled path entries:
+
+```javascript
+{
+  commandsBlob: 522,       // index into deck.message.blobs[]
+  windingRule: 'NONZERO',  // or 'EVENODD'
+  styleID: 2,              // optional — per-path fill override
+}
+```
+
+Each blob encodes path commands as `[cmdByte][float32LE params...]`:
+
+| Byte | Command | Params |
+|------|---------|--------|
+| 0x01 | moveTo  | x, y (2×f32) |
+| 0x02 | lineTo  | x, y (2×f32) |
+| 0x04 | cubicTo | c1x, c1y, c2x, c2y, x, y (6×f32) |
+| 0x00 | close   | none |
+
+Coordinates are in node-size space. The full affine transform matrix positions
+the vector in the slide.
+
+### Per-Path Fills (styleOverrideTable)
+
+A single VECTOR node can have different fill colors on different sub-paths (e.g.
+a coat-of-arms with red and white regions). This is stored as:
+
+1. `fillGeometry[].styleID` — references a style in the override table
+2. `node.vectorData.styleOverrideTable[]` — maps `styleID` to per-path `fillPaints`
+
+```javascript
+styleOverrideTable: [
+  { styleID: 1, fillPaints: [] },                    // no fill (transparent)
+  { styleID: 2, fillPaints: [{ type: 'SOLID',        // white override
+      color: { r: 1, g: 1, b: 1 }, opacity: 1 }] },
+  { styleID: 3, ... },                               // stroke-only props
+]
+```
+
+- `styleID: 0` (or absent) → use node-level `fillPaints`
+- `styleID` matching a table entry → use that entry's `fillPaints`
+- Empty `fillPaints: []` → no fill for that path
+
+The renderer groups paths by effective fill color and emits one `<path>` per
+color group. Figma shows this as "Click + to replace mixed content" in the
+Fill inspector.
+
+### Stroke Geometry
+
+`node.strokeGeometry[]` — pre-expanded stroke outlines, same blob format as
+fillGeometry. These are rendered as filled `<path>` elements (not SVG strokes),
+since Figma pre-computes the stroke outline shapes.
+
+For stroke-only vectors (no fillPaints, only strokePaints), the stroke geometry
+paths are filled with the stroke color.
+
+### VNB Fallback
+
+When neither `fillGeometry` nor `strokeGeometry` exists, the renderer falls back
+to decoding `vectorData.vectorNetworkBlob` — a binary format storing vertices,
+bezier segments, and regions. See `memory/reference_vnb_format.md` for the full
+binary layout.
+
+## INSTANCE Nodes (Symbol Resolution)
+
+INSTANCE nodes reference a SYMBOL definition and optionally override child
+properties (text, fills). The rendering process:
+
+### 1. Symbol Resolution
+
+The INSTANCE's `symbolData.symbolID` maps to a SYMBOL node. The SYMBOL's
+children define the visual content.
+
+### 2. Override Application
+
+`symbolData.symbolOverrides[]` modify specific children:
+
+```javascript
+symbolOverrides: [
+  { guidPath: { guids: [{ sessionID: 100, localID: 656 }] },
+    textData: { characters: 'Override text' } },
+  { guidPath: { guids: [...] },
+    fillPaints: [{ type: 'SOLID', color: { r: 1, g: 0, b: 0 } }] },
+]
+```
+
+**Override key mapping**: Override GUIDs may use library-original IDs (e.g.
+`100:656`) rather than local node IDs (e.g. `1:1131`). Nodes expose their
+library-original ID via `overrideKey`. The renderer builds a recursive
+`overrideKey → local node` map for cross-ID resolution.
+
+### 3. Derived Symbol Data
+
+`node.derivedSymbolData[]` contains Figma-computed layout (size, transform,
+derivedTextData) for children as they appear in this specific INSTANCE.
+
+- **Auto-layout symbols** (`symbol.stackMode` is set): Apply per-node
+  `size` + `transform` from derivedSymbolData. Skip global scale.
+- **Non-auto-layout symbols**: Apply only `derivedTextData` (glyph re-layout).
+  Use global scale for positioning.
+
+### 4. Scaling
+
+When INSTANCE dimensions differ from SYMBOL dimensions and it's NOT auto-layout,
+the entire content is wrapped in `<g transform="scale(sx,sy)">`.
+
+### 5. Stroke Rendering
+
+INSTANCE nodes may have their own `strokeGeometry` (pre-computed for instance
+dimensions). For `borderStrokeWeightsIndependent` strokes with INSIDE alignment:
+- The stroke geometry extends ±N px outside the frame edge (symmetric expansion)
+- A `<clipPath>` matching the instance bounds clips to show only the inside portion
+
+```svg
+<clipPath id="stroke-clip-1"><rect width="1820" height="56"/></clipPath>
+<path d="..." fill="#8f2727" clip-path="url(#stroke-clip-1)"/>
+```
 
 ## PNG Rendering (deck-rasterizer.mjs)
 

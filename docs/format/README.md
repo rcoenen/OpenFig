@@ -1,6 +1,10 @@
-# .deck File Format Documentation
+# .deck / .fig File Format Documentation
 
-Technical specification for the Figma Slides `.deck` binary format.
+Technical specification for the Figma binary format. `.deck` files (Slides) are
+ZIP archives containing a `canvas.fig` + metadata. The inner binary format is
+shared with standalone `.fig` files (Design).
+
+> **New here?** Start with [`docs/agents.md`](../agents.md) for a project overview.
 
 ## Documents
 

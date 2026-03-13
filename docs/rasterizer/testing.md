@@ -19,15 +19,19 @@ perceptual similarity metric. Scores range 0-1 where 1 = identical.
 |------|--------|---------|
 | `decks/reference/oil-machinations.deck` | 7 | Complex real-world deck: mixed fonts, shapes, images, SHAPE_WITH_TEXT |
 | `decks/reference/just-fonts.deck` | 1 | Font rendering: Inter Bold, Regular, Italic, Bold Italic, Underline + Irish Grover |
+| `decks/reference/svg-deck.deck` | 1 | VECTOR node rendering: coat-of-arms with fillGeometry/strokeGeometry |
+| `decks/reference/4-text-column.deck` | 1 | 4 numbered columns + rotated seal backdrop (tests affine transforms, per-path fills, node opacity) |
 
 Reference PNGs live alongside the deck in a same-named directory:
 
 ```
 decks/reference/oil-machinations/
-  page-1.png   ← Figma export, 4000x2250 (2x)
+  page-1.png   ← Figma export, 1920x1080 (1x) or 4000x2250 (2x)
   page-2.png
   ...
 decks/reference/just-fonts/
+  page-1.png
+decks/reference/4-text-column/
   page-1.png
 ```
 
@@ -48,6 +52,12 @@ oil-machinations:
 
 just-fonts:
   slide 1: 0.99  ← near-perfect with Inter v3 + derivedTextData.decorations
+
+svg-deck:
+  slide 1: 0.90  ← VECTOR rendering (fillGeometry + strokeGeometry)
+
+4-text-column:
+  slide 1: 0.90  ← affine transforms, per-path fills, node opacity
 ```
 
 ### Running Tests
@@ -77,7 +87,23 @@ node lib/rasterizer/render-report.mjs \
 node lib/rasterizer/render-report.mjs path/to.deck path/to/refs/ /tmp/report.html
 ```
 
-Reports show reference and rendered images side-by-side with SSIM score per slide.
+Reports show three columns per slide:
+
+1. **Reference** — Figma export (ground truth)
+2. **FigmaTK Render** — our SVG→PNG output
+3. **Overlay** — pre-composited difference image: `ref * 0.5 + inverted_render * 0.5`
+
+The overlay makes missing or mispositioned elements glow — any difference from
+the reference stands out as a bright artifact on a mid-grey background. Identical
+areas become uniform grey.
+
+SSIM badges are color-coded: green (≥0.98), yellow (≥0.90), red (<0.90).
+All images are click-to-zoom for close-up inspection.
+
+**Note**: Overlay PNGs are pre-rendered via sharp pixel-by-pixel compositing, not
+CSS canvas compositing. This avoids `file://` CORS restrictions that prevent
+`canvas.toDataURL()` from working on local HTML files.
+
 Open in browser: `file:///tmp/figmatk-render-report.html`
 
 ## Adding a New Reference Deck
@@ -91,10 +117,9 @@ Open in browser: `file:///tmp/figmatk-render-report.html`
 
 ## Known Limitations Affecting SSIM
 
-- **VECTOR nodes** — rendered as placeholders (magenta dashed rect)
-- **INSTANCE nodes** — symbol resolution not yet implemented
 - **Color variables** — unresolved; SHAPE_WITH_TEXT nodes on variable-colored
   backgrounds show wrong fill
 - **Text overflow** — text that overflows its bounding box in Figma is clipped;
   the rasterizer doesn't clip text to its box
-- **STAR, POLYGON** — rendered as placeholders
+- **STAR, POLYGON** — rendered as placeholders (magenta dashed rect)
+- **Gradient fills** — only SOLID fills supported; LINEAR_GRADIENT etc. are skipped
