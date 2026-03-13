@@ -38,13 +38,13 @@ raised as rendering improves — never lowered.
 
 ```
 oil-machinations:
-  slide 1: 0.84  ← unresolved color-variable fills on yellow bg
-  slide 2: 0.80
-  slide 3: 0.88
-  slide 4: 0.88
-  slide 5: 0.93
-  slide 6: 0.69  ← card text overflows; pill colors wrong
-  slide 7: 0.72  ← large font overflow; gray pill rect
+  slide 1: 0.98  ← was 0.84 before Google Fonts Darker Grotesque fix
+  slide 2: 0.83  ← lowest; unresolved elements
+  slide 3: 0.96
+  slide 4: 0.95
+  slide 5: 0.96
+  slide 6: 0.88  ← card text overflows; label pill colors wrong
+  slide 7: 0.98  ← was 0.72 before Google Fonts Darker Grotesque fix
 
 just-fonts:
   slide 1: 0.99  ← near-perfect with Inter v3 + derivedTextData.decorations

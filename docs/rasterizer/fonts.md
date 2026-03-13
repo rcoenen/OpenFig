@@ -85,15 +85,30 @@ We use version strings rather than hash-based detection because building a
 database of known font hashes doesn't scale — there are too many valid font
 builds for any given family.
 
-## Darker Grotesque — Name Patching
+## Darker Grotesque — Google Fonts Source + Name Patching
 
-`@fontsource/darker-grotesque` ships fonts with nameID 1 = `"Darker Grotesque"`
-plus weight suffix (e.g. `"Darker Grotesque Medium"`). Figma's SVG output uses
-`font-family="Darker Grotesque"` for all weights.
+**Important**: `@fontsource/darker-grotesque` WOFF2 files have visibly thinner
+glyph outlines than the Google Fonts TTF originals, despite the same version
+string (`Version 1.000;gftools[0.9.28]`). Figma downloads from Google Fonts,
+so we must use those TTFs as the source.
 
-The patched WOFF2 files in `fonts/darker-grotesque-patched-*.woff2` have nameID 1
-rewritten to just `"Darker Grotesque"` with the correct `usWeightClass` in the
-OS/2 table. This lets resvg match them by weight.
+The patched WOFF2 files in `fonts/darker-grotesque-patched-*.woff2` are:
+
+1. **Downloaded from Google Fonts API** as TTF (the authoritative source)
+2. **nameID 1 patched** from weight-specific names (e.g. `"Darker Grotesque Medium"`)
+   to just `"Darker Grotesque"` so resvg can match `font-family="Darker Grotesque"`
+3. **Converted to WOFF2** via fontTools
+
+The `usWeightClass` in the OS/2 table is preserved from the original (400, 500,
+600, 700), so resvg selects the correct weight file.
+
+### Why not @fontsource?
+
+@fontsource repackages Google Fonts but may re-encode or subset the font files.
+The resulting WOFF2 files can have different glyph outlines from the originals.
+For Darker Grotesque, this manifests as noticeably thinner strokes — weight 500
+from @fontsource looks like 400 from Google Fonts. Using the Google Fonts TTFs
+directly fixed SSIM for slide 7 from 0.72 to 0.99.
 
 ## Registering Custom Fonts
 
