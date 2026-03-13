@@ -46,6 +46,7 @@
   "author": "rcoenen",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "@resvg/resvg-wasm": "^2.6.2",
     "archiver": "^7.0.1",
     "fzstd": "^0.1.1",
     "kiwi-schema": "^0.5.0",
@@ -54,7 +55,8 @@
     "zstd-codec": "^0.1.5"
   },
   "devDependencies": {
-    "@anthropic-ai/mcpb": "^2.1.2"
+    "@anthropic-ai/mcpb": "^2.1.2",
+    "@fontsource/inter": "^5.2.8"
   },
   "keywords": [
     "figma",

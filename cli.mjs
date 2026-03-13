@@ -24,6 +24,7 @@ const COMMANDS = {
   'clone-slide':    './commands/clone-slide.mjs',
   'remove-slide':   './commands/remove-slide.mjs',
   'roundtrip':      './commands/roundtrip.mjs',
+  'render':         './commands/render.mjs',
 };
 
 const command = process.argv[2];
@@ -39,6 +40,7 @@ if (!command || command === '--help' || command === '-h') {
   console.log('  clone-slide    Duplicate a template slide with new content');
   console.log('  remove-slide   Mark slides as REMOVED');
   console.log('  roundtrip      Decode and re-encode (pipeline validation)');
+  console.log('  render         Rasterize slides to PNG');
   console.log('\nUsage: figmatk <command> [args...]');
   process.exit(0);
 }
