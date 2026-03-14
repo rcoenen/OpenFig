@@ -14,7 +14,7 @@ dashed placeholder so renders never crash.
 | `SHAPE_WITH_TEXT` | `renderShapeWithText` | Pill/badge with embedded text |
 | `ELLIPSE` | `renderEllipse` | Fill, stroke, cx/cy/rx/ry |
 | `TEXT` | `renderText` | Full typography pipeline |
-| `FRAME` | `renderFrame` | Container with fill/stroke/image, clips children |
+| `FRAME` | `renderFrame` | Container with fill/stroke/image, clips children when `frameMaskDisabled===false` (suppressed inside SYMBOL trees) |
 | `GROUP` | `renderGroup` | Transform wrapper, recurses children |
 | `SECTION` | `renderGroup` | Same as GROUP |
 | `BOOLEAN_OPERATION` | `renderGroup` | Same as GROUP |

@@ -35,30 +35,17 @@ decks/reference/4-text-column/
   page-1.png
 ```
 
-### SSIM Thresholds
+### Quality Gates
 
-Thresholds are set just below current scores as **regression guards**. They're
-raised as rendering improves — never lowered.
+All tests use the same three universal thresholds — no per-slide overrides:
 
-```
-oil-machinations:
-  slide 1: 0.98  ← was 0.84 before Google Fonts Darker Grotesque fix
-  slide 2: 0.83  ← lowest; unresolved elements
-  slide 3: 0.96
-  slide 4: 0.95
-  slide 5: 0.96
-  slide 6: 0.88  ← card text overflows; label pill colors wrong
-  slide 7: 0.98  ← was 0.72 before Google Fonts Darker Grotesque fix
+| Metric | Threshold | What it catches |
+|--------|-----------|-----------------|
+| **SSIM** | ≥ 0.90 | Global perceptual similarity — missing/shifted content |
+| **meanDelta** | ≤ 5.0 | Average per-pixel deviation (0–255) — severity SSIM downweights |
+| **offDelta** | ≤ 100 | Mean severity among divergent pixels — anti-aliasing ≈ 20–90, missing content ≈ 150+ |
 
-just-fonts:
-  slide 1: 0.99  ← near-perfect with Inter v3 + derivedTextData.decorations
-
-svg-deck:
-  slide 1: 0.90  ← VECTOR rendering (fillGeometry + strokeGeometry)
-
-4-text-column:
-  slide 1: 0.90  ← affine transforms, per-path fills, node opacity
-```
+If any single metric fails, that's a real rendering problem — not rasterizer noise.
 
 ### Running Tests
 
@@ -97,7 +84,7 @@ The overlay makes missing or mispositioned elements glow — any difference from
 the reference stands out as a bright artifact on a mid-grey background. Identical
 areas become uniform grey.
 
-SSIM badges are color-coded: green (≥0.98), yellow (≥0.90), red (<0.90).
+Three-tier badges: **PASS** (green, SSIM ≥ 0.99), **WARN** (orange, ≥ 0.90), **FAIL** (red, < 0.90).
 All images are click-to-zoom for close-up inspection.
 
 **Note**: Overlay PNGs are pre-rendered via sharp pixel-by-pixel compositing, not
@@ -119,7 +106,4 @@ Open in browser: `file:///tmp/figmatk-render-report.html`
 
 - **Color variables** — unresolved; SHAPE_WITH_TEXT nodes on variable-colored
   backgrounds show wrong fill
-- **Text overflow** — text that overflows its bounding box in Figma is clipped;
-  the rasterizer doesn't clip text to its box
 - **STAR, POLYGON** — rendered as placeholders (magenta dashed rect)
-- **Gradient fills** — only SOLID fills supported; LINEAR_GRADIENT etc. are skipped
