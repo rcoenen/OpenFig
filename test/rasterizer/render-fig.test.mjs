@@ -33,6 +33,9 @@ const FIG_REF  = join(__dirname, '../../figs/reference/medium-complex');
 const CLIP_TEST_PATH = join(__dirname, '../../figs/reference/clip-test.fig');
 const CLIP_TEST_REF  = join(__dirname, '../../figs/reference/clip-test');
 
+const BASIC_SHAPES_PATH = join(__dirname, '../../figs/reference/basic-shapes.fig');
+const BASIC_SHAPES_REF  = join(__dirname, '../../figs/reference/basic-shapes');
+
 const reportRows = [];
 
 describe('medium-complex.fig frame rendering', () => {
@@ -114,6 +117,29 @@ describe('clip-test.fig frame clipping', () => {
       expect(row.offDelta).toBeLessThanOrEqual(DEFAULT_MAX_OFF_DELTA);
     });
   }
+});
+
+describe('basic-shapes.fig rendering (STAR, POLYGON)', () => {
+  it('basic_shapes renders', async () => {
+    const fig = await FigDeck.fromDeckFile(BASIC_SHAPES_PATH);
+    const page = fig.getPages()[0];
+    const frameNode = fig.getChildren(nid(page))
+      .filter(c => c.phase !== 'REMOVED' && c.type === 'FRAME')
+      .find(c => c.name === 'basic_shapes');
+    expect(frameNode).toBeTruthy();
+
+    const svg = frameToSvg(fig, frameNode);
+    const png = await svgToPng(svg, { background: 'rgba(0,0,0,0)' });
+    const pngBuf = Buffer.from(png);
+    const refPath = join(BASIC_SHAPES_REF, 'basic_shapes.png');
+    const score = await computeSsim(pngBuf, refPath);
+    const row = await buildReportRow({ slideNumber: 'shapes', renderedPng: pngBuf, refPath, score });
+    reportRows.push(row);
+    console.log(`  basic_shapes  SSIM=${score.toFixed(4)}  Δ${row.meanDelta}  offΔ=${row.offDelta}`);
+    expect(score).toBeGreaterThanOrEqual(DEFAULT_MIN_SSIM);
+    expect(row.meanDelta).toBeLessThanOrEqual(DEFAULT_MAX_MEAN_DELTA);
+    expect(row.offDelta).toBeLessThanOrEqual(DEFAULT_MAX_OFF_DELTA);
+  });
 });
 
 afterAll(() => {
