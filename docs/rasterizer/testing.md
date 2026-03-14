@@ -106,4 +106,3 @@ Open in browser: `file:///tmp/figmatk-render-report.html`
 
 - **Color variables** — unresolved; SHAPE_WITH_TEXT nodes on variable-colored
   backgrounds show wrong fill
-- **STAR, POLYGON** — rendered as placeholders (magenta dashed rect)
