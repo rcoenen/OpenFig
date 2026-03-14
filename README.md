@@ -1,5 +1,7 @@
 # OpenFig
 
+<img src="assets/logo.webp" alt="OpenFig" width="200" />
+
 Open tools for Figma files.
 
 Parse, inspect, and render Figma design files without the Figma application.
