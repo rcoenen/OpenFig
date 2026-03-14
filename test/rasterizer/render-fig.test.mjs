@@ -47,14 +47,14 @@ describe('medium-complex.fig frame rendering', () => {
   });
 
   const expectedFrames = [
-    { page: 'Great Seal Page', frame: 'GreatSeal' },
+    { page: 'Great Seal Page', frame: 'GreatSeal', notes: 'Coat-of-arms vectors with node opacity, affine transforms, per-path fills' },
     { page: 'Page 2', frame: 'how-to' },
     { page: 'Page 2', frame: 'Lady' },
-    { page: 'Page 3', frame: 'User Bio' },
+    { page: 'Page 3', frame: 'User Bio', notes: 'Open Peeps vector illustration: INSTANCE→SYMBOL at ~4× downscale causes AA divergence on ink paths' },
     { page: 'Page 3', frame: 'bike lady' },
   ];
 
-  for (const { page, frame } of expectedFrames) {
+  for (const { page, frame, notes } of expectedFrames) {
     it(`${page} / ${frame} renders`, async () => {
       if (!fig) fig = await FigDeck.fromDeckFile(FIG_PATH);
 
@@ -74,7 +74,7 @@ describe('medium-complex.fig frame rendering', () => {
       const refPath = join(FIG_REF, `${slug}.png`);
       if (existsSync(refPath)) {
         const score = await computeSsim(pngBuf, refPath);
-        const row = await buildReportRow({ slideNumber: `fig:${frame}`, renderedPng: pngBuf, refPath, score });
+        const row = await buildReportRow({ slideNumber: `fig:${frame}`, renderedPng: pngBuf, refPath, score, notes });
         reportRows.push(row);
         console.log(`  ${page}/${frame}  SSIM=${score.toFixed(4)}  Δ${row.meanDelta}  offΔ=${row.offDelta}  →  ${outPath}`);
         expect(score).toBeGreaterThanOrEqual(DEFAULT_MIN_SSIM);
@@ -133,7 +133,7 @@ describe('basic-shapes.fig rendering (STAR, POLYGON)', () => {
     const pngBuf = Buffer.from(png);
     const refPath = join(BASIC_SHAPES_REF, 'basic_shapes.png');
     const score = await computeSsim(pngBuf, refPath);
-    const row = await buildReportRow({ slideNumber: 'shapes', renderedPng: pngBuf, refPath, score });
+    const row = await buildReportRow({ slideNumber: 'shapes', renderedPng: pngBuf, refPath, score, notes: 'STAR/POLYGON via strokeGeometry, drop shadow filter (Skia vs resvg divergence)' });
     reportRows.push(row);
     console.log(`  basic_shapes  SSIM=${score.toFixed(4)}  Δ${row.meanDelta}  offΔ=${row.offDelta}`);
     expect(score).toBeGreaterThanOrEqual(DEFAULT_MIN_SSIM);

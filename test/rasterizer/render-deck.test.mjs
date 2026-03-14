@@ -53,6 +53,12 @@ describe('oil-machinations deck rendering', () => {
     expect(deck.getActiveSlides().length).toBe(7);
   });
 
+  // Per-slide notes explaining known diff sources
+  const slideNotes = {
+    2: 'Drop shadow filters: Skia vs resvg gaussian blur divergence',
+    5: 'SHAPE_WITH_TEXT pill badges + image fills',
+  };
+
   for (let i = 1; i <= 7; i++) {
     it(`slide ${i} renders`, async () => {
       if (!deck) deck = await FigDeck.fromDeckFile(DECK_PATH);
@@ -70,7 +76,7 @@ describe('oil-machinations deck rendering', () => {
 
       const outPath = join('/tmp', `figmatk-test-slide-${i}.png`);
       writeFileSync(outPath, Buffer.from(png));
-      const row = await buildReportRow({ slideNumber: i, renderedPng: Buffer.from(png), refPath, score });
+      const row = await buildReportRow({ slideNumber: i, renderedPng: Buffer.from(png), refPath, score, notes: slideNotes[i] });
       reportRows.push(row);
 
       console.log(`  slide ${i}  SSIM=${score.toFixed(4)}  Δ${row.meanDelta}  offΔ=${row.offDelta}  →  ${outPath}`);
@@ -120,7 +126,7 @@ describe('svg-deck rendering (VECTOR nodes)', () => {
       return;
     }
     const score = await computeSsim(Buffer.from(png), refPath);
-    const row = await buildReportRow({ slideNumber: 'svg-1', renderedPng: Buffer.from(png), refPath, score });
+    const row = await buildReportRow({ slideNumber: 'svg-1', renderedPng: Buffer.from(png), refPath, score, notes: 'Coat-of-arms VECTOR nodes: fillGeometry/strokeGeometry from binary blobs' });
     reportRows.push(row);
     console.log(`  slide 1  SSIM=${score.toFixed(4)}  Δ${row.meanDelta}  offΔ=${row.offDelta}  →  ${outPath}`);
     expect(score).toBeGreaterThanOrEqual(DEFAULT_MIN_SSIM);
@@ -144,7 +150,7 @@ describe('4-text-column deck rendering', () => {
       return;
     }
     const score = await computeSsim(Buffer.from(png), refPath);
-    const row = await buildReportRow({ slideNumber: '4textcol-1', renderedPng: Buffer.from(png), refPath, score });
+    const row = await buildReportRow({ slideNumber: '4textcol-1', renderedPng: Buffer.from(png), refPath, score, notes: 'Rotated coat-of-arms backdrop: affine transforms, per-path fills, node opacity' });
     reportRows.push(row);
     console.log(`  slide 1  SSIM=${score.toFixed(4)}  Δ${row.meanDelta}  offΔ=${row.offDelta}  →  ${outPath}`);
     expect(score).toBeGreaterThanOrEqual(DEFAULT_MIN_SSIM);
